@@ -7,6 +7,7 @@ from game.Selectangle import Selectangle
 from game.Vector2D import Vector2D
 from game.MouseButtons import MouseButtons
 from game.globals import SCREEN_SIZE
+from game.Colors import Colors
 import pygame
 
 pygame.init ()
@@ -30,9 +31,9 @@ class Game ():
         
         # Populate our list of drawables
         self.drawables.append (self.grid)
-        self.drawables.append (self.selectan.gle)
+        self.drawables.append (self.selectangle)
        
-        for n in range (3):
+        for n in range (1):
             self.players.append (Player (Vector2D (40, 20 * (n + 1))))
             
         for p in self.players:
@@ -75,7 +76,7 @@ class Game ():
         check the keyboard and mouse for input
         '''
         mouse = pygame.mouse.get_pressed()
-        keys = pygame.key.get_pressed()
+        #keys = pygame.key.get_pressed()
         pos = pygame.mouse.get_pos()
         
         for e in pygame.event.get():
@@ -87,10 +88,8 @@ class Game ():
                 if e.button == MouseButtons.MIDDLE:
                     pass
                 if e.button == MouseButtons.RIGHT:
-                    for p in self.players:
-                        if p.selected:
-                            p.setDestination(self.grid.getClosestNode (Vector2D (e.pos [0], e.pos [1])))
-                            
+                    self.mouseRight (e)
+  
             if e.type == pygame.MOUSEMOTION:
                 if mouse [MouseButtons.LEFT - 1]:
                     self.selectangle.release = e.pos
@@ -107,12 +106,39 @@ class Game ():
     def select (self):
         for p in self.players:
             if self.selectangle.contains (p.position):
-                p.selected = True
+                p.isSelected = True
             else:
-                p.selected = False
+                p.isSelected = False
         pass
 
-            
+    def mouseRight (self, e):
+        for p in self.players:
+            if p.isSelected:
+                clickPosition = Vector2D (e.pos [0], e.pos [1])
+
+                source = self.grid.getNodeAt (p.currentDestination)
+                dest = self.grid.getNodeAt (clickPosition)
+                
+                finishNode = self.grid.shortestPath(source, dest)
+                
+                # make a line between start node and finish node
+                # while lines are intersecting:
+                #    Add a new destination right before the final node
+                #        while the first line segment is still intersecting:
+                #            move the new destination back one space on the path
+                #        set the start node to the new node
+                
+                # Usage
+                currentNode = finishNode.previousNode
+                while currentNode != Grid.NIL:
+                    currentNode.color = Colors.BLUE
+                    currentNode = currentNode.previousNode
+                    
+                #
+                p.addDestination(self.grid.getClosestNodePosition (clickPosition))
+                     
+    
+    
 if __name__ == '__main__': 
     game = Game ()
     game.run()  
